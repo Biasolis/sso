@@ -1,14 +1,28 @@
 import ldap from 'ldapjs';
 
-const client = ldap.createClient({
-  url: process.env.LDAP_URL
-});
+let client;
+
+// Só cria o cliente LDAP se a URL estiver definida no .env
+if (process.env.LDAP_URL) {
+    client = ldap.createClient({
+        url: process.env.LDAP_URL
+    });
+
+    client.on('error', (err) => {
+        console.error('Erro de conexão com o cliente LDAP:', err);
+    });
+}
 
 /**
  * Autentica um usuário contra o servidor LDAP/AD.
  * Retorna os dados do usuário do AD em caso de sucesso, ou null em caso de falha.
  */
 export const authenticateLDAP = (username, password) => {
+  // Se o cliente LDAP não foi inicializado, não faz nada
+  if (!client) {
+      return Promise.resolve(null);
+  }
+
   return new Promise((resolve, reject) => {
     // Primeiro, fazemos o "bind" com um usuário administrativo para poder pesquisar
     client.bind(process.env.LDAP_BIND_DN, process.env.LDAP_BIND_PASSWORD, (err) => {
@@ -48,12 +62,12 @@ export const authenticateLDAP = (username, password) => {
           // para verificar se a senha está correta.
           const userClient = ldap.createClient({ url: process.env.LDAP_URL });
           userClient.bind(userEntry.dn, password, (bindErr) => {
+            userClient.unbind(); // Garante que a conexão seja fechada
             if (bindErr) {
               // Senha incorreta
               return resolve(null);
             }
             // Sucesso!
-            userClient.unbind();
             resolve({
                 email: userEntry.mail,
                 name: `${userEntry.givenName} ${userEntry.sn}`
