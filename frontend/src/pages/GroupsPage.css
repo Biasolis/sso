@@ -1,0 +1,73 @@
+.groups-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.groups-table thead {
+  background-color: #34495e;
+  color: white;
+}
+
+.groups-table th,
+.groups-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.groups-table tbody tr:nth-of-type(even) {
+  background-color: #f3f3f3;
+}
+
+.groups-table tbody tr:hover {
+  background-color: #e8f4f8;
+}
+
+.groups-table .actions-cell button {
+  margin-right: 5px;
+}
+
+.groups-table button {
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: white;
+}
+
+.btn-manage {
+  background-color: #f39c12;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: white;
+}
+
+.btn-manage:hover {
+    background-color: #e67e22;
+}
+
+/* Estilos para o formulário no modal */
+.group-form .form-group {
+  margin-bottom: 15px;
+}
+
+.group-form label {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.group-form input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.group-form .form-actions {
+  text-align: right;
+  margin-top: 20px;
+}

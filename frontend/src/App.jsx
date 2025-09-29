@@ -1,35 +1,46 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext'; // Importar
+import ProtectedRoute from './components/ProtectedRoute'; // Importar
+import AdminLayout from './components/layout/AdminLayout';
+import AuthLayout from './components/layout/AuthLayout';
+import DashboardPage from './pages/DashboardPage';
+import UsersPage from './pages/UsersPage';
+import GroupsPage from './pages/GroupsPage';
+import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
 
-function App() {
-  const [count, setCount] = useState(0)
-
+function HomePage() {
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div style={{ padding: '20px' }}>
+      <h1>Página Inicial SSO</h1>
+      <p>Esta é a página pública. O painel de admin está em <code>/admin/dashboard</code>.</p>
+      <p>Acesse a página de <a href="/login">login</a>.</p>
+    </div>
+  );
 }
 
-export default App
+function App() {
+  return (
+    <AuthProvider> {/* Envolver tudo com o AuthProvider */}
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        
+        <Route element={<AuthLayout />}>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+        </Route>
+
+        {/* Rotas Protegidas do Painel de Admin */}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="users" element={<UsersPage />} />
+            <Route path="groups" element={<GroupsPage />} />
+          </Route>
+        </Route>
+      </Routes>
+    </AuthProvider>
+  );
+}
+
+export default App;

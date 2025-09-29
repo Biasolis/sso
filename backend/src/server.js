@@ -2,7 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
 import { testConnection } from './database/db.js';
-import authRoutes from './routes/authRoutes.js'; // Importa as rotas
+import authRoutes from './routes/authRoutes.js';
+import superadminRoutes from './routes/superadminRoutes.js';
 
 // Roda a função para testar a conexão antes de iniciar o servidor.
 await testConnection();
@@ -22,8 +23,21 @@ app.get('/', (req, res) => {
   });
 });
 
+// Rota de Health Check
+app.get('/health', async (req, res) => {
+    try {
+        await testConnection();
+        res.status(200).json({ status: 'ok', database: 'connected' });
+    } catch (error) {
+        res.status(500).json({ status: 'error', database: 'disconnected' });
+    }
+});
+
 // Usa as rotas de autenticação
 app.use('/auth', authRoutes);
+
+// Usa as rotas de superadmin
+app.use('/superadmin', superadminRoutes);
 
 const PORT = process.env.PORT || 4000;
 

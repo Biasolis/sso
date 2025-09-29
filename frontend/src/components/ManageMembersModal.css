@@ -1,0 +1,56 @@
+.modal-content.large {
+  width: 800px;
+}
+
+.members-management {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.user-list-container {
+  width: 48%;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 10px;
+}
+
+.user-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.user-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+}
+
+.user-list li:last-child {
+  border-bottom: none;
+}
+
+.btn-remove, .btn-add-user {
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: white;
+}
+
+.btn-remove {
+  background-color: #e74c3c;
+}
+
+.btn-add-user {
+  background-color: #27ae60;
+}
+
+.error-message {
+  color: #e74c3c;
+}
