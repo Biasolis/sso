@@ -1,16 +1,13 @@
 import { useState, useEffect } from 'react';
 import apiClient from '../api/axiosConfig';
 import Modal from '../components/Modal';
-import { toast } from 'react-hot-toast'; // Importar toast
+import { toast } from 'react-hot-toast';
 import './UsersPage.css';
 
 function UsersPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // O estado de erro foi removido, usaremos toasts
-
-  // Estados para o modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [modalMode, setModalMode] = useState('add');
@@ -43,6 +40,20 @@ function UsersPage() {
         console.error(err);
       }
     }
+  };
+
+  const handlePromoteUser = async (userId) => {
+      if (window.confirm('Deseja dar privilégios de Superadmin a este usuário? Esta ação não pode ser desfeita pela interface.')) {
+          const promise = apiClient.post(`/superadmin/users/${userId}/promote`);
+          toast.promise(promise, {
+              loading: 'Promovendo...',
+              success: (response) => {
+                  setUsers(users.map(u => u.id === userId ? response.data : u));
+                  return 'Usuário promovido com sucesso!';
+              },
+              error: 'Falha ao promover o usuário.'
+          });
+      }
   };
 
   const handleAddClick = () => {
@@ -102,7 +113,7 @@ function UsersPage() {
           <tr>
             <th>Nome</th>
             <th>Email</th>
-            <th>Data de Criação</th>
+            <th>Status</th>
             <th>Ações</th>
           </tr>
         </thead>
@@ -111,8 +122,13 @@ function UsersPage() {
             <tr key={user.id}>
               <td>{user.name}</td>
               <td>{user.email}</td>
-              <td>{new Date(user.created_at).toLocaleDateString()}</td>
               <td>
+                {user.is_superadmin ? <span className="status-admin">Superadmin</span> : 'Usuário'}
+              </td>
+              <td>
+                {!user.is_superadmin && (
+                    <button className="btn-promote" onClick={() => handlePromoteUser(user.id)}>Promover</button>
+                )}
                 <button className="btn-edit" onClick={() => handleEditClick(user)}>Editar</button>
                 <button className="btn-delete" onClick={() => handleDeleteUser(user.id)}>Excluir</button>
               </td>

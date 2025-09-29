@@ -1,9 +1,9 @@
 import { Link, Outlet } from 'react-router-dom';
-import useAuth from '../../hooks/useAuth'; // Importar
+import useAuth from '../../hooks/useAuth';
 import './AdminLayout.css';
 
 function AdminLayout() {
-  const { logout } = useAuth(); // Usar o hook
+  const { logout } = useAuth();
 
   return (
     <div className="admin-layout">
@@ -14,6 +14,7 @@ function AdminLayout() {
             <li><Link to="/admin/dashboard">Dashboard</Link></li>
             <li><Link to="/admin/users">Usuários</Link></li>
             <li><Link to="/admin/groups">Grupos</Link></li>
+            <li><Link to="/admin/clients">Clientes OAuth</Link></li> {/* Adicionado */}
             </ul>
         </div>
         <div>

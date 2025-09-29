@@ -1,10 +1,13 @@
 import pool from '../database/db.js';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
+
+const generateSecureString = (length = 32) => crypto.randomBytes(length).toString('hex');
 
 // Users
 export const getUsers = async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT id, email, name, created_at, updated_at FROM users');
+    const { rows } = await pool.query('SELECT id, email, name, is_superadmin, created_at, updated_at FROM users');
     res.status(200).json(rows);
   } catch (error) {
     console.error('Erro ao buscar usuários:', error);
@@ -102,6 +105,24 @@ export const deleteUser = async (req, res) => {
     }
 };
 
+export const promoteUser = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const { rows } = await pool.query(
+            'UPDATE users SET is_superadmin = TRUE, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING id, name, email, is_superadmin',
+            [id]
+        );
+        if (rows.length === 0) {
+            return res.status(404).json({ message: 'Usuário não encontrado.' });
+        }
+        res.status(200).json(rows[0]);
+    } catch (error) {
+        console.error('Erro ao promover usuário:', error);
+        res.status(500).json({ message: 'Erro interno do servidor.' });
+    }
+};
+
+
 // Groups
 export const getGroups = async (req, res) => {
     try {
@@ -160,10 +181,10 @@ export const addUserToGroup = async (req, res) => {
         );
         res.status(201).json({ message: 'Usuário adicionado ao grupo com sucesso.' });
     } catch (error) {
-        if (error.code === '23505') { // unique_violation
+        if (error.code === '23505') {
             return res.status(409).json({ message: 'Usuário já pertence a este grupo.' });
         }
-        if (error.code === '23503') { // foreign_key_violation
+        if (error.code === '23503') {
             return res.status(404).json({ message: 'Usuário ou grupo não encontrado.' });
         }
         console.error('Erro ao adicionar usuário ao grupo:', error);
@@ -228,6 +249,52 @@ export const getUsersNotInGroup = async (req, res) => {
         res.status(200).json(rows);
     } catch (error) {
         console.error('Erro ao buscar usuários fora do grupo:', error);
+        res.status(500).json({ message: 'Erro interno do servidor.' });
+    }
+};
+
+// OAuth Clients
+export const getClients = async (req, res) => {
+    try {
+        const { rows } = await pool.query('SELECT id, client_id, client_name, redirect_uris FROM clients');
+        res.status(200).json(rows);
+    } catch (error) {
+        console.error('Erro ao buscar clientes:', error);
+        res.status(500).json({ message: 'Erro interno do servidor.' });
+    }
+};
+
+export const createClient = async (req, res) => {
+    const { client_name, redirect_uris } = req.body;
+    if (!client_name || !redirect_uris || !Array.isArray(redirect_uris) || redirect_uris.length === 0) {
+        return res.status(400).json({ message: 'Nome do cliente e uma lista de redirect_uris são obrigatórios.' });
+    }
+
+    const client_id = generateSecureString(16);
+    const client_secret = generateSecureString(32);
+
+    try {
+        const { rows } = await pool.query(
+            'INSERT INTO clients (client_id, client_secret, client_name, redirect_uris) VALUES ($1, $2, $3, $4) RETURNING *',
+            [client_id, client_secret, client_name, redirect_uris]
+        );
+        res.status(201).json(rows[0]);
+    } catch (error) {
+        console.error('Erro ao criar cliente:', error);
+        res.status(500).json({ message: 'Erro interno do servidor.' });
+    }
+};
+
+export const deleteClient = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const deleteOp = await pool.query('DELETE FROM clients WHERE id = $1', [id]);
+        if (deleteOp.rowCount === 0) {
+            return res.status(404).json({ message: 'Cliente não encontrado.' });
+        }
+        res.status(204).send();
+    } catch (error) {
+        console.error('Erro ao deletar cliente:', error);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 };

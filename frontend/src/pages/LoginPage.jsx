@@ -1,11 +1,12 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import apiClient from '../api/axiosConfig';
-import useAuth from '../hooks/useAuth'; // Importar
+import useAuth from '../hooks/useAuth';
 
 function LoginPage() {
-  const { login } = useAuth(); // Usar o hook
+  const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -19,7 +20,25 @@ function LoginPage() {
     try {
         const response = await apiClient.post('/auth/login', loginData);
         toast.success('Login realizado com sucesso!');
-        login(response.data); // Chamar a função de login do contexto
+        
+        // Passa os dados do usuário (incluindo o token) para a função de login do contexto
+        login(response.data);
+
+        // Verifica se há parâmetros OAuth na URL para continuar o fluxo
+        const clientId = searchParams.get('client_id');
+        if (clientId) {
+            // Reconstrói a URL de consentimento com os parâmetros originais
+            const consentUrl = new URL('/consent', window.location.origin);
+            searchParams.forEach((value, key) => {
+                consentUrl.searchParams.append(key, value);
+            });
+            // O token do usuário será pego pelo AuthContext e injetado na requisição pelo axios
+            navigate(consentUrl.pathname + consentUrl.search);
+        } else {
+            // Se não for um fluxo OAuth, vai para o dashboard
+            navigate('/admin/dashboard');
+        }
+
     } catch (error) {
         toast.error('Credenciais inválidas. Verifique seu email e senha.');
         console.error(error);

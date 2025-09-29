@@ -5,8 +5,6 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* ... (estilos da tabela que você já tem) ... */
-
 .users-table thead {
   background-color: #34495e;
   color: white;
@@ -34,6 +32,15 @@
   cursor: pointer;
   margin-right: 5px;
   color: white;
+}
+
+.status-admin {
+    background-color: #f1c40f;
+    color: #333;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
 }
 
 .btn-add {
@@ -65,6 +72,14 @@
 
 .btn-delete:hover {
   background-color: #c0392b;
+}
+
+.btn-promote {
+    background-color: #9b59b6;
+}
+
+.btn-promote:hover {
+    background-color: #8e44ad;
 }
 
 /* Estilos para o formulário no modal */

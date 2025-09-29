@@ -1,0 +1,61 @@
+.consent-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background-color: #f4f6f9;
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
+
+.consent-card {
+  width: 450px;
+  padding: 40px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.consent-title {
+  color: #2c3e50;
+  margin-bottom: 20px;
+}
+
+.consent-card p {
+    color: #34495e;
+    line-height: 1.6;
+}
+
+.consent-actions {
+  margin-top: 30px;
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.consent-button {
+  flex-grow: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.consent-button.deny {
+  background-color: #e74c3c;
+}
+
+.consent-button.deny:hover {
+  background-color: #c0392b;
+}
+
+.consent-button.approve {
+  background-color: #27ae60;
+}
+
+.consent-button.approve:hover {
+  background-color: #229954;
+}

@@ -1,13 +1,15 @@
 import { Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext'; // Importar
-import ProtectedRoute from './components/ProtectedRoute'; // Importar
+import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
 import AdminLayout from './components/layout/AdminLayout';
 import AuthLayout from './components/layout/AuthLayout';
 import DashboardPage from './pages/DashboardPage';
 import UsersPage from './pages/UsersPage';
 import GroupsPage from './pages/GroupsPage';
+import ClientsPage from './pages/ClientsPage'; // Importar
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import ConsentPage from './pages/ConsentPage';
 
 function HomePage() {
   return (
@@ -21,7 +23,7 @@ function HomePage() {
 
 function App() {
   return (
-    <AuthProvider> {/* Envolver tudo com o AuthProvider */}
+    <AuthProvider>
       <Routes>
         <Route path="/" element={<HomePage />} />
         
@@ -29,13 +31,17 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
         </Route>
+        
+        <Route element={<ProtectedRoute />}>
+            <Route path="/consent" element={<ConsentPage />} />
+        </Route>
 
-        {/* Rotas Protegidas do Painel de Admin */}
         <Route element={<ProtectedRoute />}>
           <Route path="/admin" element={<AdminLayout />}>
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="users" element={<UsersPage />} />
             <Route path="groups" element={<GroupsPage />} />
+            <Route path="clients" element={<ClientsPage />} /> {/* Adicionado */}
           </Route>
         </Route>
       </Routes>
