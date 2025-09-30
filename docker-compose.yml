@@ -24,7 +24,10 @@ services:
       - db
     ports:
       - "4000:4000"
+    volumes:
+      - ./backend/logs:/usr/src/app/logs # Adicionado
     environment:
+      - NODE_ENV=production # Importante para ativar o logging em ficheiro
       - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
       - PORT=4000
       - FRONTEND_URL=${FRONTEND_URL}
@@ -34,7 +37,6 @@ services:
       - MAIL_USER=${MAIL_USER}
       - MAIL_PASS=${MAIL_PASS}
       - MAIL_FROM=${MAIL_FROM}
-      # As variáveis LDAP são opcionais
       - LDAP_URL=${LDAP_URL}
       - LDAP_BIND_DN=${LDAP_BIND_DN}
       - LDAP_BIND_PASSWORD=${LDAP_BIND_PASSWORD}

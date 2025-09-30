@@ -1,11 +1,14 @@
 import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
+import onFinished from 'on-finished'; // Importar
+import logger from './config/logger.js'; // Importar o logger
+import auditMiddleware from './middleware/auditMiddleware.js'; // Importar o middleware
 import { testConnection } from './database/db.js';
 import authRoutes from './routes/authRoutes.js';
 import superadminRoutes from './routes/superadminRoutes.js';
 import oauthRoutes from './routes/oauthRoutes.js';
-import accountRoutes from './routes/accountRoutes.js'; // Importar
+import accountRoutes from './routes/accountRoutes.js';
 
 // Executa a função para testar a conexão antes de iniciar o servidor.
 await testConnection();
@@ -16,6 +19,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Middleware de Auditoria para todas as requisições
+app.use((req, res, next) => {
+    auditMiddleware(req, res, onFinished);
+    next();
+});
 
 
 // Rota de verificação
@@ -33,6 +42,7 @@ app.get('/health', async (req, res) => {
         await testConnection();
         res.status(200).json({ status: 'ok', database: 'connected' });
     } catch (error) {
+        logger.error('Health check falhou:', error);
         res.status(500).json({ status: 'error', database: 'disconnected' });
     }
 });
@@ -52,5 +62,5 @@ app.use('/superadmin', superadminRoutes);
 const PORT = process.env.PORT || 4000;
 
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor SSO a rodar na porta ${PORT}`);
+  logger.info(`🚀 Servidor SSO a rodar na porta ${PORT}`);
 });

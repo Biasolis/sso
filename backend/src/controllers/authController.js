@@ -4,6 +4,7 @@ import pool from '../database/db.js';
 import { authenticateLDAP } from '../services/ldapService.js';
 import crypto from 'crypto';
 import { sendPasswordResetEmail, sendVerificationEmail } from '../services/mailService.js';
+import logger from '../config/logger.js'; // Importar o logger
 
 // Função para registar um novo utilizador
 export const signup = async (req, res) => {
@@ -23,7 +24,6 @@ export const signup = async (req, res) => {
     );
     const newUser = newUserResult.rows[0];
 
-    // Gera e envia o token de verificação
     const verificationToken = crypto.randomBytes(32).toString('hex');
     const expires_at = new Date(Date.now() + 24 * 3600000); // 24 horas de validade
 
@@ -33,13 +33,15 @@ export const signup = async (req, res) => {
     );
     await sendVerificationEmail(newUser.email, verificationToken);
 
+    logger.info(`Novo registo para ${email}. E-mail de verificação enviado.`);
     res.status(201).json({ message: 'Registo bem-sucedido. Por favor, verifique o seu e-mail.' });
 
   } catch (error) {
     if (error.code === '23505') {
+      logger.warn(`Tentativa de registo falhada para e-mail já existente: ${email}`);
       return res.status(409).json({ message: 'Este email já está em uso.' });
     }
-    console.error('Erro no registo:', error);
+    logger.error('Erro no registo:', error);
     res.status(500).json({ message: 'Erro interno do servidor.' });
   }
 };
@@ -53,53 +55,49 @@ export const login = async (req, res) => {
   }
 
   try {
-    // 1. Tenta a autenticação local primeiro
     const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     let user = result.rows[0];
 
     if (user) {
         if (!user.is_verified) {
+            logger.warn(`Tentativa de login falhada para e-mail não verificado: ${email}`);
             return res.status(401).json({ message: 'A sua conta ainda não foi verificada. Por favor, verifique o seu e-mail.' });
         }
         const isPasswordCorrect = await bcrypt.compare(password, user.password_hash);
         if (isPasswordCorrect) {
-            // Sucesso na autenticação local
             const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '8h' });
+            logger.info(`Login bem-sucedido (local) para: ${email}`);
             return res.status(200).json({ user: { id: user.id, email: user.email, name: user.name }, token });
         }
     }
 
-    // 2. Se a autenticação local falhar ou o utilizador não existir, tenta o LDAP (se configurado)
     if (process.env.LDAP_URL) {
-        // O nome de utilizador para o AD pode ser a parte do email antes do @
         const username = email.split('@')[0];
         const ldapUser = await authenticateLDAP(username, password);
         
         if (ldapUser) {
-            // Se autenticado no LDAP, verifica se o utilizador já existe localmente
             let localUser = user;
             if (!localUser) {
-                // Provisionamento Just-In-Time: cria o utilizador localmente
-                // O hash da palavra-passe é aleatório, pois a autenticação será sempre via LDAP
                 const randomPasswordHash = await bcrypt.hash(crypto.randomBytes(20).toString('hex'), 10);
                 const newUserResult = await pool.query(
-                    'INSERT INTO users (email, password_hash, name) VALUES ($1, $2, $3) RETURNING *',
+                    'INSERT INTO users (email, password_hash, name, is_verified) VALUES ($1, $2, $3, TRUE) RETURNING *',
                     [ldapUser.email, randomPasswordHash, ldapUser.name]
                 );
                 localUser = newUserResult.rows[0];
+                logger.info(`Utilizador LDAP provisionado localmente: ${ldapUser.email}`);
             }
             
-            // Gera o token para o utilizador local
             const token = jwt.sign({ id: localUser.id, email: localUser.email }, process.env.JWT_SECRET, { expiresIn: '8h' });
+            logger.info(`Login bem-sucedido (LDAP) para: ${email}`);
             return res.status(200).json({ user: { id: localUser.id, email: localUser.email, name: localUser.name }, token });
         }
     }
-
-    // 3. Se todas as tentativas falharem
+    
+    logger.warn(`Tentativa de login falhada para: ${email}`);
     return res.status(401).json({ message: 'Credenciais inválidas.' });
 
   } catch (error) {
-    console.error('Erro no login:', error);
+    logger.error(`Erro no processo de login para ${email}:`, error);
     res.status(500).json({ message: 'Erro interno do servidor.' });
   }
 };
@@ -111,25 +109,25 @@ export const forgotPassword = async (req, res) => {
         const { rows } = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
         const user = rows[0];
 
-        // Responde sempre com sucesso para não revelar se um e-mail existe na base de dados
         if (user) {
             const token = crypto.randomBytes(32).toString('hex');
             const expires_at = new Date(Date.now() + 3600000); // 1 hora de validade
 
-            // Apaga tokens antigos para este utilizador antes de inserir um novo
             await pool.query('DELETE FROM password_reset_tokens WHERE user_id = $1', [user.id]);
             await pool.query(
                 'INSERT INTO password_reset_tokens (token, user_id, expires_at) VALUES ($1, $2, $3)',
                 [token, user.id, expires_at]
             );
 
-            // Envia o e-mail
             await sendPasswordResetEmail(user.email, token);
+            logger.info(`Pedido de redefinição de palavra-passe para: ${email}`);
+        } else {
+            logger.info(`Pedido de redefinição de palavra-passe para e-mail não registado: ${email}`);
         }
 
         res.status(200).json({ message: 'Se o e-mail estiver registado, receberá um link para redefinir a sua palavra-passe.' });
     } catch (error) {
-        console.error('Erro no forgotPassword:', error);
+        logger.error(`Erro no forgotPassword para ${email}:`, error);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 };
@@ -146,6 +144,7 @@ export const resetPassword = async (req, res) => {
         const resetToken = rows[0];
 
         if (!resetToken || new Date() > resetToken.expires_at) {
+            logger.warn(`Tentativa de redefinição de palavra-passe com token inválido ou expirado.`);
             return res.status(400).json({ message: 'Token inválido ou expirado.' });
         }
 
@@ -153,19 +152,18 @@ export const resetPassword = async (req, res) => {
         const password_hash = await bcrypt.hash(password, salt);
 
         await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [password_hash, resetToken.user_id]);
-
-        // Apaga o token após o uso
         await pool.query('DELETE FROM password_reset_tokens WHERE token = $1', [token]);
 
+        logger.info(`Palavra-passe redefinida com sucesso para o utilizador ID: ${resetToken.user_id}`);
         res.status(200).json({ message: 'Palavra-passe redefinida com sucesso.' });
 
     } catch (error) {
-        console.error('Erro no resetPassword:', error);
+        logger.error(`Erro no resetPassword:`, error);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 };
 
-// NOVA FUNÇÃO para verificar o e-mail
+// VERIFICAR O E-MAIL
 export const verifyEmail = async (req, res) => {
     const { token } = req.body;
     if (!token) {
@@ -177,16 +175,18 @@ export const verifyEmail = async (req, res) => {
         const verificationToken = rows[0];
 
         if (!verificationToken || new Date() > verificationToken.expires_at) {
+            logger.warn(`Tentativa de verificação de e-mail com token inválido ou expirado.`);
             return res.status(400).json({ message: 'Token inválido ou expirado.' });
         }
 
         await pool.query('UPDATE users SET is_verified = TRUE WHERE id = $1', [verificationToken.user_id]);
         await pool.query('DELETE FROM email_verification_tokens WHERE token = $1', [token]);
 
+        logger.info(`E-mail verificado com sucesso para o utilizador ID: ${verificationToken.user_id}`);
         res.status(200).json({ message: 'E-mail verificado com sucesso!' });
 
     } catch (error) {
-        console.error('Erro na verificação de e-mail:', error);
+        logger.error(`Erro na verificação de e-mail:`, error);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 };
