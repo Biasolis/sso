@@ -17,6 +17,7 @@
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
     "ldapjs": "^3.0.7",
+    "nodemailer": "^7.0.6",
     "pg": "^8.11.5"
   }
 }

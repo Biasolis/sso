@@ -8,7 +8,6 @@ function ClientsPage() {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Estados para os modais
   const [isAddModalOpen, setAddModalOpen] = useState(false);
   const [isCredentialsModalOpen, setCredentialsModalOpen] = useState(false);
   const [newClientCredentials, setNewClientCredentials] = useState(null);
@@ -34,11 +33,10 @@ function ClientsPage() {
     e.preventDefault();
     const { client_name, redirect_uris } = e.target.elements;
 
-    // Converte as URIs de redirect (separadas por vírgula) em um array
     const uris = redirect_uris.value.split(',').map(uri => uri.trim()).filter(uri => uri);
 
     if (uris.length === 0) {
-      toast.error("Você deve fornecer pelo menos uma Redirect URI.");
+      toast.error("Deve fornecer pelo menos uma Redirect URI.");
       return;
     }
     
@@ -48,12 +46,12 @@ function ClientsPage() {
     });
 
     toast.promise(promise, {
-        loading: 'Criando cliente...',
+        loading: 'A criar cliente...',
         success: (response) => {
-            setClients([...clients, response.data]);
-            setNewClientCredentials(response.data); // Salva as credenciais para exibir
-            setAddModalOpen(false); // Fecha o modal de adição
-            setCredentialsModalOpen(true); // Abre o modal de credenciais
+            fetchClients(); // Busca a lista atualizada para incluir os escopos padrão
+            setNewClientCredentials(response.data);
+            setAddModalOpen(false);
+            setCredentialsModalOpen(true);
             return 'Cliente criado com sucesso!';
         },
         error: 'Falha ao criar o cliente.'
@@ -61,7 +59,7 @@ function ClientsPage() {
   };
 
   const handleDeleteClient = async (clientId) => {
-    if (window.confirm('Tem certeza que deseja excluir este cliente? Todas as aplicações que o utilizam perderão o acesso.')) {
+    if (window.confirm('Tem a certeza que deseja excluir este cliente? Todas as aplicações que o utilizam perderão o acesso.')) {
       try {
         await apiClient.delete(`/superadmin/clients/${clientId}`);
         setClients(clients.filter((client) => client.id !== clientId));
@@ -73,11 +71,11 @@ function ClientsPage() {
     }
   };
 
-  if (loading) return <p>Carregando clientes...</p>;
+  if (loading) return <p>A carregar clientes...</p>;
 
   return (
     <div>
-      <h1>Gerenciamento de Clientes OAuth</h1>
+      <h1>Gestão de Clientes OAuth</h1>
       <button className="btn-add" onClick={() => setAddModalOpen(true)}>Adicionar Cliente</button>
       <table className="clients-table">
         <thead>
@@ -85,6 +83,7 @@ function ClientsPage() {
             <th>Nome do Cliente</th>
             <th>Client ID</th>
             <th>Redirect URIs</th>
+            <th>Escopos Permitidos</th>
             <th>Ações</th>
           </tr>
         </thead>
@@ -99,6 +98,11 @@ function ClientsPage() {
                 </ul>
               </td>
               <td>
+                <ul className="scopes-inline-list">
+                  {client.allowed_scopes.map(scope => <li key={scope}>{scope}</li>)}
+                </ul>
+              </td>
+              <td>
                 <button className="btn-delete" onClick={() => handleDeleteClient(client.id)}>Excluir</button>
               </td>
             </tr>
@@ -106,7 +110,6 @@ function ClientsPage() {
         </tbody>
       </table>
 
-      {/* Modal de Adicionar Cliente */}
       <Modal 
         isOpen={isAddModalOpen} 
         onClose={() => setAddModalOpen(false)} 
@@ -115,7 +118,7 @@ function ClientsPage() {
         <form onSubmit={handleFormSubmit} className="client-form">
           <div className="form-group">
             <label htmlFor="client_name">Nome do Cliente:</label>
-            <input id="client_name" type="text" placeholder="Minha Aplicação Web" required />
+            <input id="client_name" type="text" placeholder="A Minha Aplicação Web" required />
           </div>
           <div className="form-group">
             <label htmlFor="redirect_uris">Redirect URIs:</label>
@@ -134,14 +137,13 @@ function ClientsPage() {
         </form>
       </Modal>
 
-      {/* Modal para Exibir Credenciais */}
       <Modal
         isOpen={isCredentialsModalOpen}
         onClose={() => setCredentialsModalOpen(false)}
         title="Credenciais do Cliente Geradas"
       >
         <div className="credentials-display">
-            <p><strong>Atenção:</strong> Guarde o <strong>Client Secret</strong> em um lugar seguro. Ele não será exibido novamente!</p>
+            <p><strong>Atenção:</strong> Guarde o <strong>Client Secret</strong> num lugar seguro. Ele não será exibido novamente!</p>
             <div className="credential-item">
                 <label>Client ID:</label>
                 <code>{newClientCredentials?.client_id}</code>

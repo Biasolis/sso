@@ -26,6 +26,21 @@
     line-height: 1.6;
 }
 
+.scopes-list {
+    list-style: none;
+    padding: 10px 0;
+    margin: 15px 0;
+    text-align: left;
+    display: inline-block;
+}
+
+.scopes-list li {
+    background-color: #ecf0f1;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
 .consent-actions {
   margin-top: 30px;
   display: flex;

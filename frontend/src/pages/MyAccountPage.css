@@ -1,0 +1,56 @@
+.account-page {
+    max-width: 800px;
+}
+
+.account-card {
+    background-color: #ffffff;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+.account-card h2 {
+    margin-top: 0;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+}
+
+.account-card .form-group {
+    margin-bottom: 20px;
+}
+
+.account-card label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.account-card input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.account-card input:disabled {
+    background-color: #f3f3f3;
+    cursor: not-allowed;
+}
+
+.account-card .form-actions {
+    text-align: right;
+    margin-top: 20px;
+}
+
+/* Reutiliza estilos de botões definidos anteriormente */
+.btn-save {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+}

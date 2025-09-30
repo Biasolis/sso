@@ -67,3 +67,13 @@
 .auth-link:hover {
   text-decoration: underline;
 }
+
+.auth-link-inline {
+    font-size: 14px;
+    color: #3498db;
+    text-decoration: none;
+}
+
+.auth-link-inline:hover {
+    text-decoration: underline;
+}

@@ -27,7 +27,7 @@ export const isSuperadmin = async (req, res, next) => {
   }
 };
 
-// NOVO MIDDLEWARE
+// Middleware para verificar se o access token JWT é válido
 export const verifyAccessToken = async (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -37,14 +37,31 @@ export const verifyAccessToken = async (req, res, next) => {
   const token = authHeader.split(' ')[1];
 
   try {
-    // Verifica se o token é um JWT válido assinado pelo nosso segredo
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // O 'subject' do nosso access token é o ID do usuário
     req.userId = decoded.sub;
-    
+    req.scopes = decoded.scp || [];
+
     next();
   } catch (error) {
     return res.status(401).json({ error: 'invalid_token', error_description: 'O access token é inválido ou expirou.' });
+  }
+};
+
+// NOVO MIDDLEWARE - Para verificar se o utilizador está simplesmente autenticado
+export const isAuthenticated = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'Acesso negado. Nenhum token fornecido.' });
+  }
+
+  const token = authHeader.split(' ')[1];
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded; // Adiciona os dados do utilizador (id, email) à requisição
+    next();
+  } catch (error) {
+    res.status(401).json({ message: 'Token inválido.' });
   }
 };

@@ -4,9 +4,10 @@ import 'dotenv/config';
 import { testConnection } from './database/db.js';
 import authRoutes from './routes/authRoutes.js';
 import superadminRoutes from './routes/superadminRoutes.js';
-import oauthRoutes from './routes/oauthRoutes.js'; // Importar
+import oauthRoutes from './routes/oauthRoutes.js';
+import accountRoutes from './routes/accountRoutes.js'; // Importar
 
-// Roda a função para testar a conexão antes de iniciar o servidor.
+// Executa a função para testar a conexão antes de iniciar o servidor.
 await testConnection();
 
 const app = express();
@@ -14,7 +15,6 @@ const app = express();
 // Middlewares
 app.use(cors());
 app.use(express.json());
-// Para lidar com dados de formulário enviados pelo cliente no endpoint /token
 app.use(express.urlencoded({ extended: true }));
 
 
@@ -37,17 +37,20 @@ app.get('/health', async (req, res) => {
     }
 });
 
-// Usa as rotas de OAuth
+// Utiliza as rotas de OAuth
 app.use('/oauth', oauthRoutes);
 
-// Usa as rotas de autenticação
+// Utiliza as rotas de autenticação
 app.use('/auth', authRoutes);
 
-// Usa as rotas de superadmin
+// Utiliza as rotas da conta do utilizador
+app.use('/api/account', accountRoutes);
+
+// Utiliza as rotas de superadmin
 app.use('/superadmin', superadminRoutes);
 
 const PORT = process.env.PORT || 4000;
 
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor SSO rodando na porta ${PORT}`);
+  console.log(`🚀 Servidor SSO a rodar na porta ${PORT}`);
 });

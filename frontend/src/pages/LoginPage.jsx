@@ -21,26 +21,21 @@ function LoginPage() {
         const response = await apiClient.post('/auth/login', loginData);
         toast.success('Login realizado com sucesso!');
         
-        // Passa os dados do usuário (incluindo o token) para a função de login do contexto
         login(response.data);
 
-        // Verifica se há parâmetros OAuth na URL para continuar o fluxo
         const clientId = searchParams.get('client_id');
         if (clientId) {
-            // Reconstrói a URL de consentimento com os parâmetros originais
             const consentUrl = new URL('/consent', window.location.origin);
             searchParams.forEach((value, key) => {
                 consentUrl.searchParams.append(key, value);
             });
-            // O token do usuário será pego pelo AuthContext e injetado na requisição pelo axios
             navigate(consentUrl.pathname + consentUrl.search);
         } else {
-            // Se não for um fluxo OAuth, vai para o dashboard
             navigate('/admin/dashboard');
         }
 
     } catch (error) {
-        toast.error('Credenciais inválidas. Verifique seu email e senha.');
+        toast.error('Credenciais inválidas. Verifique o seu email e palavra-passe.');
         console.error(error);
     }
   };
@@ -53,12 +48,15 @@ function LoginPage() {
           <input id="email" type="email" required />
         </div>
         <div className="form-group">
-          <label htmlFor="password">Senha:</label>
+          <label htmlFor="password">Palavra-passe:</label>
           <input id="password" type="password" required />
+        </div>
+        <div className="form-group" style={{ textAlign: 'right' }}>
+            <Link to="/forgot-password" className="auth-link-inline">Esqueceu a sua palavra-passe?</Link>
         </div>
         <button type="submit" className="auth-button">Entrar</button>
       </form>
-      <Link to="/signup" className="auth-link">Não tem uma conta? Cadastre-se</Link>
+      <Link to="/signup" className="auth-link">Não tem uma conta? Registe-se</Link>
     </div>
   );
 }

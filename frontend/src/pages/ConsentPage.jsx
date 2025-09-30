@@ -4,19 +4,25 @@ import apiClient from '../api/axiosConfig';
 import useAuth from '../hooks/useAuth';
 import './ConsentPage.css';
 
+// Mapeia os nomes dos escopos para descrições mais amigáveis
+const scopeDescriptions = {
+  openid: 'Confirmar a sua identidade.',
+  profile: 'Aceder às informações básicas do seu perfil (nome).',
+  email: 'Aceder ao seu endereço de e-mail.',
+};
+
 function ConsentPage() {
   const [searchParams] = useSearchParams();
   const { user, token } = useAuth();
 
-  // Extrai todos os parâmetros da URL
   const client_id = searchParams.get('client_id');
   const redirect_uri = searchParams.get('redirect_uri');
   const state = searchParams.get('state');
-  const response_type = searchParams.get('response_type');
-  
+  const scope = searchParams.get('scope') || '';
+  const requestedScopes = scope.split(' ');
+
   const handleConsent = async (approved) => {
     if (!approved) {
-      // Se o usuário negar, redirecionamos de volta com um erro
       const redirectUrl = new URL(redirect_uri);
       redirectUrl.searchParams.append('error', 'access_denied');
       if (state) {
@@ -31,28 +37,33 @@ function ConsentPage() {
         client_id,
         redirect_uri,
         state,
-        user_token: token, // Envia o token do usuário logado para o backend
+        user_token: token,
+        scopes: requestedScopes, // Envia os escopos aprovados para o backend
       });
       
-      // Redireciona o browser do usuário para a URL de callback do cliente
       window.location.href = response.data.redirectUrl;
 
     } catch (error) {
-      toast.error('Ocorreu um erro ao processar sua autorização.');
+      toast.error('Ocorreu um erro ao processar a sua autorização.');
       console.error(error);
     }
   };
 
   if (!user) {
-    return <p>Você precisa estar logado para dar consentimento.</p>;
+    return <p>Precisa de estar autenticado para dar consentimento.</p>;
   }
 
   return (
     <div className="consent-container">
       <div className="consent-card">
         <h2 className="consent-title">Autorizar Aplicação</h2>
-        <p>A aplicação <strong>{client_id}</strong> está a solicitar permissão para aceder à sua identidade.</p>
-        <p>Isto irá permitir que a aplicação o identifique e aceda a informações básicas do seu perfil, como o seu nome e email.</p>
+        <p>A aplicação <strong>{client_id}</strong> está a solicitar permissão para:</p>
+        <ul className="scopes-list">
+            {requestedScopes.map(s => (
+                <li key={s}>{scopeDescriptions[s] || s}</li>
+            ))}
+        </ul>
+        <p>Ao permitir, a aplicação poderá aceder a estas informações.</p>
         <div className="consent-actions">
           <button onClick={() => handleConsent(false)} className="consent-button deny">
             Negar

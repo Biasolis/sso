@@ -8,9 +8,9 @@
   background-color: #2c3e50;
   color: white;
   padding: 20px;
-  display: flex; /* Adicionado */
-  flex-direction: column; /* Adicionado */
-  justify-content: space-between; /* Adicionado */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .sidebar h2 {
@@ -40,7 +40,46 @@
   background-color: #f4f6f9;
 }
 
+.sidebar-footer {
+    border-top: 1px solid #34495e;
+    padding-top: 15px;
+}
+
+.user-info {
+    padding: 10px;
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.user-info strong {
+    display: block;
+}
+
+.user-info small {
+    color: #bdc3c7;
+}
+
+.account-button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    background-color: #3498db;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    box-sizing: border-box;
+}
+
+.account-button:hover {
+    background-color: #2980b9;
+}
+
 .logout-button {
+  display: block;
   width: 100%;
   padding: 10px;
   border: none;
@@ -49,7 +88,7 @@
   color: white;
   font-size: 16px;
   cursor: pointer;
-  margin-top: 20px;
+  margin-top: 10px; /* Adicionado para espaçamento */
 }
 
 .logout-button:hover {

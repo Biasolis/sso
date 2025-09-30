@@ -37,6 +37,17 @@
   background-color: #e8f4f8;
 }
 
+.scopes-inline-list li {
+    display: inline-block;
+    background-color: #95a5a6;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+}
+
 /* Formulário e Modal */
 .client-form .form-group {
   margin-bottom: 15px;
