@@ -16,15 +16,18 @@ import {
     getUsersNotInGroup,
     getClients,
     createClient,
-    deleteClient
+    deleteClient,
+    getClientPermissions,
+    addClientPermission,
+    removeClientPermission
 } from '../controllers/superadminController.js';
 
 const router = Router();
 
-// Aplica o middleware de superadmin a todas as rotas deste arquivo
+// Aplica o middleware de superadmin a todas as rotas deste ficheiro
 router.use(isSuperadmin);
 
-// User routes
+// Rotas de Utilizadores
 router.get('/users', getUsers);
 router.get('/users/:id', getUserById);
 router.post('/users', createUser);
@@ -32,20 +35,25 @@ router.put('/users/:id', updateUser);
 router.delete('/users/:id', deleteUser);
 router.post('/users/:id/promote', promoteUser);
 
-// Group routes
+// Rotas de Grupos
 router.get('/groups', getGroups);
 router.post('/groups', createGroup);
 router.delete('/groups/:id', deleteGroup);
 router.get('/groups/:id/members', getGroupWithMembers);
 router.get('/groups/:id/available-users', getUsersNotInGroup);
 
-// User-group association routes
+// Rotas de Associação Utilizador-Grupo
 router.post('/groups/addUser', addUserToGroup);
 router.delete('/groups/removeUser', removeUserFromGroup);
 
-// Client routes
+// Rotas de Clientes
 router.get('/clients', getClients);
 router.post('/clients', createClient);
 router.delete('/clients/:id', deleteClient);
+
+// Rotas de Permissões de Clientes (NOVO)
+router.get('/clients/:id/permissions', getClientPermissions);
+router.post('/clients/:id/permissions', addClientPermission);
+router.delete('/clients/:id/permissions', removeClientPermission);
 
 export default router;

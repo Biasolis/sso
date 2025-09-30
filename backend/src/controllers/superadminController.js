@@ -1,6 +1,7 @@
 import pool from '../database/db.js';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
+import logger from '../config/logger.js';
 
 const generateSecureString = (length = 32) => crypto.randomBytes(length).toString('hex');
 
@@ -10,7 +11,7 @@ export const getUsers = async (req, res) => {
     const { rows } = await pool.query('SELECT id, email, name, is_superadmin, created_at, updated_at FROM users');
     res.status(200).json(rows);
   } catch (error) {
-    console.error('Erro ao buscar usuários:', error);
+    logger.error('Erro ao buscar utilizadores:', error);
     res.status(500).json({ message: 'Erro interno do servidor.' });
   }
 };
@@ -20,11 +21,11 @@ export const getUserById = async (req, res) => {
     const { id } = req.params;
     const { rows } = await pool.query('SELECT id, email, name, created_at, updated_at FROM users WHERE id = $1', [id]);
     if (rows.length === 0) {
-      return res.status(404).json({ message: 'Usuário não encontrado.' });
+      return res.status(404).json({ message: 'Utilizador não encontrado.' });
     }
     res.status(200).json(rows[0]);
   } catch (error) {
-    console.error('Erro ao buscar usuário:', error);
+    logger.error(`Erro ao buscar utilizador ${id}:`, error);
     res.status(500).json({ message: 'Erro interno do servidor.' });
   }
 };
@@ -33,7 +34,7 @@ export const createUser = async (req, res) => {
     const { email, password, name } = req.body;
 
     if (!email || !password) {
-        return res.status(400).json({ message: 'Email e senha são obrigatórios.' });
+        return res.status(400).json({ message: 'Email e palavra-passe são obrigatórios.' });
     }
 
     try {
@@ -50,7 +51,7 @@ export const createUser = async (req, res) => {
         if (error.code === '23505') {
             return res.status(409).json({ message: 'Este email já está em uso.' });
         }
-        console.error('Erro no cadastro:', error);
+        logger.error('Erro no registo de utilizador:', error);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 };
@@ -77,7 +78,7 @@ export const updateUser = async (req, res) => {
         );
 
         if (rows.length === 0) {
-            return res.status(404).json({ message: 'Usuário não encontrado.' });
+            return res.status(404).json({ message: 'Utilizador não encontrado.' });
         }
 
         res.status(200).json(rows[0]);
@@ -85,7 +86,7 @@ export const updateUser = async (req, res) => {
         if (error.code === '23505') {
             return res.status(409).json({ message: 'Este email já está em uso.' });
         }
-        console.error('Erro ao atualizar usuário:', error);
+        logger.error(`Erro ao atualizar utilizador ${id}:`, error);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 };
@@ -96,11 +97,11 @@ export const deleteUser = async (req, res) => {
     try {
         const deleteOp = await pool.query('DELETE FROM users WHERE id = $1', [id]);
         if (deleteOp.rowCount === 0) {
-            return res.status(404).json({ message: 'Usuário não encontrado.' });
+            return res.status(404).json({ message: 'Utilizador não encontrado.' });
         }
         res.status(204).send();
     } catch (error) {
-        console.error('Erro ao deletar usuário:', error);
+        logger.error(`Erro ao apagar utilizador ${id}:`, error);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 };
@@ -113,11 +114,11 @@ export const promoteUser = async (req, res) => {
             [id]
         );
         if (rows.length === 0) {
-            return res.status(404).json({ message: 'Usuário não encontrado.' });
+            return res.status(404).json({ message: 'Utilizador não encontrado.' });
         }
         res.status(200).json(rows[0]);
     } catch (error) {
-        console.error('Erro ao promover usuário:', error);
+        logger.error(`Erro ao promover utilizador ${id}:`, error);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 };
@@ -129,7 +130,7 @@ export const getGroups = async (req, res) => {
         const { rows } = await pool.query('SELECT * FROM groups');
         res.status(200).json(rows);
     } catch (error) {
-        console.error('Erro ao buscar grupos:', error);
+        logger.error('Erro ao buscar grupos:', error);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 };
@@ -149,7 +150,7 @@ export const createGroup = async (req, res) => {
         if (error.code === '23505') {
             return res.status(409).json({ message: 'Este nome de grupo já está em uso.' });
         }
-        console.error('Erro ao criar grupo:', error);
+        logger.error('Erro ao criar grupo:', error);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 };
@@ -163,7 +164,7 @@ export const deleteGroup = async (req, res) => {
         }
         res.status(204).send();
     } catch (error) {
-        console.error('Erro ao deletar grupo:', error);
+        logger.error(`Erro ao apagar grupo ${id}:`, error);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 };
@@ -179,15 +180,15 @@ export const addUserToGroup = async (req, res) => {
             'INSERT INTO user_groups (user_id, group_id) VALUES ($1, $2)',
             [userId, groupId]
         );
-        res.status(201).json({ message: 'Usuário adicionado ao grupo com sucesso.' });
+        res.status(201).json({ message: 'Utilizador adicionado ao grupo com sucesso.' });
     } catch (error) {
         if (error.code === '23505') {
-            return res.status(409).json({ message: 'Usuário já pertence a este grupo.' });
+            return res.status(409).json({ message: 'Utilizador já pertence a este grupo.' });
         }
         if (error.code === '23503') {
-            return res.status(404).json({ message: 'Usuário ou grupo não encontrado.' });
+            return res.status(404).json({ message: 'Utilizador ou grupo não encontrado.' });
         }
-        console.error('Erro ao adicionar usuário ao grupo:', error);
+        logger.error(`Erro ao adicionar utilizador ${userId} ao grupo ${groupId}:`, error);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 };
@@ -207,7 +208,7 @@ export const removeUserFromGroup = async (req, res) => {
         }
         res.status(204).send();
     } catch (error) {
-        console.error('Erro ao remover usuário do grupo:', error);
+        logger.error(`Erro ao remover utilizador ${userId} do grupo ${groupId}:`, error);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 };
@@ -234,7 +235,7 @@ export const getGroupWithMembers = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Erro ao buscar membros do grupo:', error);
+        logger.error(`Erro ao buscar membros do grupo ${id}:`, error);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 };
@@ -248,7 +249,7 @@ export const getUsersNotInGroup = async (req, res) => {
         );
         res.status(200).json(rows);
     } catch (error) {
-        console.error('Erro ao buscar usuários fora do grupo:', error);
+        logger.error(`Erro ao buscar utilizadores fora do grupo ${id}:`, error);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 };
@@ -256,10 +257,10 @@ export const getUsersNotInGroup = async (req, res) => {
 // OAuth Clients
 export const getClients = async (req, res) => {
     try {
-        const { rows } = await pool.query('SELECT id, client_id, client_name, redirect_uris FROM clients');
+        const { rows } = await pool.query('SELECT id, client_id, client_name, redirect_uris, allowed_scopes FROM clients');
         res.status(200).json(rows);
     } catch (error) {
-        console.error('Erro ao buscar clientes:', error);
+        logger.error('Erro ao buscar clientes:', error);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 };
@@ -280,7 +281,7 @@ export const createClient = async (req, res) => {
         );
         res.status(201).json(rows[0]);
     } catch (error) {
-        console.error('Erro ao criar cliente:', error);
+        logger.error('Erro ao criar cliente:', error);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 };
@@ -294,7 +295,76 @@ export const deleteClient = async (req, res) => {
         }
         res.status(204).send();
     } catch (error) {
-        console.error('Erro ao deletar cliente:', error);
+        logger.error(`Erro ao apagar cliente ${id}:`, error);
+        res.status(500).json({ message: 'Erro interno do servidor.' });
+    }
+};
+
+// Client Permissions (NOVAS FUNÇÕES)
+export const getClientPermissions = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const assignedUsersQuery = pool.query('SELECT u.id, u.name, u.email FROM users u JOIN client_users cu ON u.id = cu.user_id WHERE cu.client_id = $1', [id]);
+        const assignedGroupsQuery = pool.query('SELECT g.id, g.name FROM groups g JOIN client_groups cg ON g.id = cg.group_id WHERE cg.client_id = $1', [id]);
+        const availableUsersQuery = pool.query('SELECT id, name, email FROM users WHERE id NOT IN (SELECT user_id FROM client_users WHERE client_id = $1)', [id]);
+        const availableGroupsQuery = pool.query('SELECT id, name FROM groups WHERE id NOT IN (SELECT group_id FROM client_groups WHERE client_id = $1)', [id]);
+
+        const [assignedUsers, assignedGroups, availableUsers, availableGroups] = await Promise.all([assignedUsersQuery, assignedGroupsQuery, availableUsersQuery, availableGroupsQuery]);
+
+        res.status(200).json({
+            assignedUsers: assignedUsers.rows,
+            assignedGroups: assignedGroups.rows,
+            availableUsers: availableUsers.rows,
+            availableGroups: availableGroups.rows
+        });
+    } catch (error) {
+        logger.error(`Erro ao buscar permissões para o cliente ${id}:`, error);
+        res.status(500).json({ message: 'Erro interno do servidor.' });
+    }
+};
+
+export const addClientPermission = async (req, res) => {
+    const { id } = req.params;
+    const { type, entityId } = req.body; // type pode ser 'user' ou 'group'
+    
+    if (!type || !entityId) {
+        return res.status(400).json({ message: 'O tipo (user/group) e o ID da entidade são obrigatórios.' });
+    }
+
+    const table = type === 'user' ? 'client_users' : 'client_groups';
+    const column = type === 'user' ? 'user_id' : 'group_id';
+
+    try {
+        await pool.query(`INSERT INTO ${table} (client_id, ${column}) VALUES ($1, $2)`, [id, entityId]);
+        res.status(201).json({ message: 'Permissão adicionada com sucesso.' });
+    } catch (error) {
+        if (error.code === '23505') {
+            return res.status(409).json({ message: 'Esta permissão já existe.' });
+        }
+        logger.error(`Erro ao adicionar permissão ao cliente ${id}:`, error);
+        res.status(500).json({ message: 'Erro interno do servidor.' });
+    }
+};
+
+export const removeClientPermission = async (req, res) => {
+    const { id } = req.params;
+    const { type, entityId } = req.body;
+    
+    if (!type || !entityId) {
+        return res.status(400).json({ message: 'O tipo (user/group) e o ID da entidade são obrigatórios.' });
+    }
+
+    const table = type === 'user' ? 'client_users' : 'client_groups';
+    const column = type === 'user' ? 'user_id' : 'group_id';
+
+    try {
+        const result = await pool.query(`DELETE FROM ${table} WHERE client_id = $1 AND ${column} = $2`, [id, entityId]);
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: 'Permissão não encontrada.' });
+        }
+        res.status(204).send();
+    } catch (error) {
+        logger.error(`Erro ao remover permissão do cliente ${id}:`, error);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 };

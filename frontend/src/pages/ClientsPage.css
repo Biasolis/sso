@@ -17,6 +17,15 @@
   border-bottom: 1px solid #ddd;
 }
 
+.clients-table .actions-cell {
+    width: 1%;
+    white-space: nowrap;
+}
+
+.clients-table .actions-cell button {
+    margin-right: 5px;
+}
+
 .clients-table code {
     background-color: #ecf0f1;
     padding: 2px 5px;

@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash VARCHAR(255) NOT NULL,
     name VARCHAR(255),
     is_superadmin BOOLEAN DEFAULT FALSE,
-    is_verified BOOLEAN DEFAULT FALSE, -- Adicionado
+    is_verified BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -36,6 +36,20 @@ CREATE TABLE IF NOT EXISTS user_groups (
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     group_id UUID NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
     PRIMARY KEY (user_id, group_id)
+);
+
+-- Tabela de associação entre clientes e utilizadores (NOVO)
+CREATE TABLE IF NOT EXISTS client_users (
+    client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    PRIMARY KEY (client_id, user_id)
+);
+
+-- Tabela de associação entre clientes e grupos (NOVO)
+CREATE TABLE IF NOT EXISTS client_groups (
+    client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+    group_id UUID NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
+    PRIMARY KEY (client_id, group_id)
 );
 
 -- Tabela para armazenar os códigos de autorização temporários
@@ -75,7 +89,7 @@ CREATE TABLE IF NOT EXISTS password_reset_tokens (
     expires_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
--- Tabela para armazenar os tokens de verificação de e-mail (NOVO)
+-- Tabela para armazenar os tokens de verificação de e-mail
 CREATE TABLE IF NOT EXISTS email_verification_tokens (
     token VARCHAR(255) PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,

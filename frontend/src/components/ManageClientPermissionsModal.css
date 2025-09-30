@@ -1,0 +1,62 @@
+.permissions-container {
+    display: flex;
+    gap: 20px;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.permissions-section {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+}
+
+.permissions-section h3 {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 8px;
+    margin-top: 0;
+}
+
+.entity-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 20px 0;
+    flex-grow: 1;
+}
+
+.entity-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.entity-list li:nth-child(odd) {
+    background-color: #f9f9f9;
+}
+
+.entity-list li span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.btn-remove, .btn-add-permission {
+    border: none;
+    padding: 5px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    color: white;
+    font-size: 12px;
+    margin-left: 10px;
+    flex-shrink: 0;
+}
+
+.btn-remove {
+    background-color: #e74c3c;
+}
+
+.btn-add-permission {
+    background-color: #27ae60;
+}

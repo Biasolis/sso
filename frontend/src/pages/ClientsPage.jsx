@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import apiClient from '../api/axiosConfig';
 import Modal from '../components/Modal';
+import ManageClientPermissionsModal from '../components/ManageClientPermissionsModal'; // Importar
 import { toast } from 'react-hot-toast';
 import './ClientsPage.css';
 
@@ -8,9 +9,13 @@ function ClientsPage() {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Estados para os modais
   const [isAddModalOpen, setAddModalOpen] = useState(false);
   const [isCredentialsModalOpen, setCredentialsModalOpen] = useState(false);
+  const [isPermissionsModalOpen, setPermissionsModalOpen] = useState(false); // Novo
+  
   const [newClientCredentials, setNewClientCredentials] = useState(null);
+  const [selectedClient, setSelectedClient] = useState(null); // Novo
 
   const fetchClients = async () => {
     try {
@@ -48,7 +53,7 @@ function ClientsPage() {
     toast.promise(promise, {
         loading: 'A criar cliente...',
         success: (response) => {
-            fetchClients(); // Busca a lista atualizada para incluir os escopos padrão
+            fetchClients();
             setNewClientCredentials(response.data);
             setAddModalOpen(false);
             setCredentialsModalOpen(true);
@@ -69,6 +74,11 @@ function ClientsPage() {
         console.error(err);
       }
     }
+  };
+
+  const handleManagePermissionsClick = (client) => {
+    setSelectedClient(client);
+    setPermissionsModalOpen(true);
   };
 
   if (loading) return <p>A carregar clientes...</p>;
@@ -102,7 +112,8 @@ function ClientsPage() {
                   {client.allowed_scopes.map(scope => <li key={scope}>{scope}</li>)}
                 </ul>
               </td>
-              <td>
+              <td className="actions-cell">
+                <button className="btn-manage" onClick={() => handleManagePermissionsClick(client)}>Gerir Acesso</button>
                 <button className="btn-delete" onClick={() => handleDeleteClient(client.id)}>Excluir</button>
               </td>
             </tr>
@@ -110,6 +121,7 @@ function ClientsPage() {
         </tbody>
       </table>
 
+      {/* Modal de Adicionar Cliente */}
       <Modal 
         isOpen={isAddModalOpen} 
         onClose={() => setAddModalOpen(false)} 
@@ -137,6 +149,7 @@ function ClientsPage() {
         </form>
       </Modal>
 
+      {/* Modal para Exibir Credenciais */}
       <Modal
         isOpen={isCredentialsModalOpen}
         onClose={() => setCredentialsModalOpen(false)}
@@ -157,6 +170,15 @@ function ClientsPage() {
             </div>
         </div>
       </Modal>
+
+      {/* Modal para Gerir Permissões (NOVO) */}
+      {selectedClient && (
+        <ManageClientPermissionsModal
+            isOpen={isPermissionsModalOpen}
+            onClose={() => setPermissionsModalOpen(false)}
+            client={selectedClient}
+        />
+      )}
     </div>
   );
 }
