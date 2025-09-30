@@ -8,7 +8,7 @@ const generateRandomString = (length) => {
 };
 
 const generateAccessToken = (userId, clientId, scopes) => {
-    const payload = { sub: userId, aud: clientId, scp: scopes }; // Adiciona scopes (scp)
+    const payload = { sub: userId, aud: clientId, scp: scopes };
     return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
 };
 
@@ -64,7 +64,6 @@ export const approve = async (req, res) => {
         const decoded = jwt.verify(user_token, process.env.JWT_SECRET);
         const userId = decoded.id;
 
-        // VERIFICAÇÃO DE PERMISSÃO
         const clientResult = await pool.query('SELECT id FROM clients WHERE client_id = $1', [client_id]);
         if (clientResult.rows.length === 0) {
             return res.status(400).json({ message: 'Cliente inválido.' });
@@ -83,15 +82,12 @@ export const approve = async (req, res) => {
 
         const hasPermission = userPermissionResult.rowCount > 0 || userGroupsResult.rowCount > 0;
 
-        // Descobrir se o cliente tem algum utilizador ou grupo associado
         const clientAssignments = await pool.query(
             'SELECT (SELECT COUNT(*) FROM client_users WHERE client_id = $1) + (SELECT COUNT(*) FROM client_groups WHERE client_id = $1) AS total',
             [internalClientId]
         );
         const hasAnyAssignment = clientAssignments.rows[0].total > 0;
 
-        // Se o cliente tem atribuições, mas o utilizador não tem permissão, nega o acesso.
-        // Se o cliente não tem nenhuma atribuição, permite o acesso a todos (comportamento padrão).
         if (hasAnyAssignment && !hasPermission) {
             logger.warn(`Acesso negado para o utilizador ${userId} ao cliente ${client_id}.`);
             const deniedUrl = new URL(redirect_uri);
@@ -100,10 +96,15 @@ export const approve = async (req, res) => {
             if (state) deniedUrl.searchParams.append('state', state);
             return res.status(200).json({ redirectUrl: deniedUrl.toString() });
         }
-        // FIM DA VERIFICAÇÃO
+
+        // INSERIR REGISTO DE ACESSO
+        await pool.query(
+            'INSERT INTO sso_access_logs (user_id, client_id) VALUES ($1, $2)',
+            [userId, internalClientId]
+        );
 
         const code = generateRandomString(32);
-        const expires_at = new Date(Date.now() + 10 * 60 * 1000); // 10 minutos
+        const expires_at = new Date(Date.now() + 10 * 60 * 1000);
 
         await pool.query(
             'INSERT INTO auth_codes (code, user_id, client_id, redirect_uri, expires_at, scopes) VALUES ($1, $2, $3, $4, $5, $6)',
@@ -116,7 +117,7 @@ export const approve = async (req, res) => {
             redirectUrl.searchParams.append('state', state);
         }
 
-        logger.info(`Código de autorização gerado para o utilizador ${userId} para o cliente ${client_id}`);
+        logger.info(`Acesso SSO bem-sucedido e código de autorização gerado para o utilizador ${userId} para o cliente ${client_id}`);
         res.status(200).json({ redirectUrl: redirectUrl.toString() });
 
     } catch (error) {
@@ -173,10 +174,9 @@ export const token = async (req, res) => {
 
         await pool.query('UPDATE refresh_tokens SET is_revoked = TRUE WHERE token = $1', [refresh_token]);
         
-        // Numa implementação real, os escopos deveriam ser armazenados com o refresh token para serem reutilizados aqui
         const newAccessToken = generateAccessToken(storedToken.user_id, client.client_id, ['openid', 'profile', 'email']);
         const newRefreshToken = generateRandomString(64);
-        const newRefreshTokenExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 dias
+        const newRefreshTokenExpiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 
         await pool.query(
             'INSERT INTO refresh_tokens (token, user_id, client_id, expires_at) VALUES ($1, $2, $3, $4)',

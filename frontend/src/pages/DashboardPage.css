@@ -1,0 +1,75 @@
+/* Estilos para o Dashboard do Admin */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.metric-card {
+    background-color: #ffffff;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.metric-card h2 {
+    margin-top: 0;
+    font-size: 18px;
+    color: #34495e;
+}
+
+.metric-card p {
+    font-size: 48px;
+    font-weight: bold;
+    margin: 10px 0 0 0;
+    color: #2c3e50;
+}
+
+.logs-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background-color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.logs-table thead {
+    background-color: #34495e;
+    color: white;
+}
+
+.logs-table th,
+.logs-table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.logs-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.logs-table tbody tr:nth-of-type(even) {
+    background-color: #f9f9f9;
+}
+
+
+/* Estilos para o Dashboard do Utilizador Normal */
+.dashboard-user {
+    text-align: center;
+    padding-top: 50px;
+}
+
+.dashboard-user h1 {
+    color: #2c3e50;
+}
+
+.dashboard-user p {
+    color: #34495e;
+    font-size: 18px;
+    line-height: 1.6;
+}

@@ -5,6 +5,46 @@ import logger from '../config/logger.js';
 
 const generateSecureString = (length = 32) => crypto.randomBytes(length).toString('hex');
 
+// NOVA FUNÇÃO
+export const getDashboardMetrics = async (req, res) => {
+    try {
+        const userCountQuery = pool.query('SELECT COUNT(*) FROM users');
+        const clientCountQuery = pool.query('SELECT COUNT(*) FROM clients');
+        const groupCountQuery = pool.query('SELECT COUNT(*) FROM groups');
+        const recentLoginsQuery = pool.query(`
+            SELECT 
+                sal.id,
+                u.name as user_name,
+                u.email as user_email,
+                c.client_name,
+                sal.created_at
+            FROM sso_access_logs sal
+            JOIN users u ON sal.user_id = u.id
+            JOIN clients c ON sal.client_id = c.id
+            ORDER BY sal.created_at DESC
+            LIMIT 10;
+        `);
+
+        const [userCount, clientCount, groupCount, recentLogins] = await Promise.all([
+            userCountQuery,
+            clientCountQuery,
+            groupCountQuery,
+            recentLoginsQuery
+        ]);
+
+        res.status(200).json({
+            totalUsers: parseInt(userCount.rows[0].count, 10),
+            totalClients: parseInt(clientCount.rows[0].count, 10),
+            totalGroups: parseInt(groupCount.rows[0].count, 10),
+            recentLogins: recentLogins.rows,
+        });
+
+    } catch (error) {
+        logger.error('Erro ao buscar as métricas do dashboard:', error);
+        res.status(500).json({ message: 'Erro interno do servidor.' });
+    }
+};
+
 // Users
 export const getUsers = async (req, res) => {
   try {
@@ -300,7 +340,7 @@ export const deleteClient = async (req, res) => {
     }
 };
 
-// Client Permissions (NOVAS FUNÇÕES)
+// Client Permissions
 export const getClientPermissions = async (req, res) => {
     const { id } = req.params;
     try {
@@ -325,7 +365,7 @@ export const getClientPermissions = async (req, res) => {
 
 export const addClientPermission = async (req, res) => {
     const { id } = req.params;
-    const { type, entityId } = req.body; // type pode ser 'user' ou 'group'
+    const { type, entityId } = req.body;
     
     if (!type || !entityId) {
         return res.status(400).json({ message: 'O tipo (user/group) e o ID da entidade são obrigatórios.' });

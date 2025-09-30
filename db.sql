@@ -31,21 +31,21 @@ CREATE TABLE IF NOT EXISTS groups (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabela de associação entre utilizadores e grupos (relação muitos-para-muitos)
+-- Tabela para associação entre utilizadores e grupos (relação muitos-para-muitos)
 CREATE TABLE IF NOT EXISTS user_groups (
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     group_id UUID NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
     PRIMARY KEY (user_id, group_id)
 );
 
--- Tabela de associação entre clientes e utilizadores (NOVO)
+-- Tabela de associação entre clientes e utilizadores
 CREATE TABLE IF NOT EXISTS client_users (
     client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     PRIMARY KEY (client_id, user_id)
 );
 
--- Tabela de associação entre clientes e grupos (NOVO)
+-- Tabela de associação entre clientes e grupos
 CREATE TABLE IF NOT EXISTS client_groups (
     client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
     group_id UUID NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
@@ -94,4 +94,12 @@ CREATE TABLE IF NOT EXISTS email_verification_tokens (
     token VARCHAR(255) PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     expires_at TIMESTAMP WITH TIME ZONE NOT NULL
+);
+
+-- Tabela para registar os acessos via SSO (NOVO)
+CREATE TABLE IF NOT EXISTS sso_access_logs (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    client_id UUID NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

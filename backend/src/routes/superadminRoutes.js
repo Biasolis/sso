@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { isSuperadmin } from '../middleware/authMiddleware.js';
 import {
+    getDashboardMetrics,
     getUsers,
     getUserById,
     createUser,
@@ -27,6 +28,9 @@ const router = Router();
 // Aplica o middleware de superadmin a todas as rotas deste ficheiro
 router.use(isSuperadmin);
 
+// Rotas do Dashboard
+router.get('/dashboard/metrics', getDashboardMetrics);
+
 // Rotas de Utilizadores
 router.get('/users', getUsers);
 router.get('/users/:id', getUserById);
@@ -51,7 +55,7 @@ router.get('/clients', getClients);
 router.post('/clients', createClient);
 router.delete('/clients/:id', deleteClient);
 
-// Rotas de Permissões de Clientes (NOVO)
+// Rotas de Permissões de Clientes
 router.get('/clients/:id/permissions', getClientPermissions);
 router.post('/clients/:id/permissions', addClientPermission);
 router.delete('/clients/:id/permissions', removeClientPermission);

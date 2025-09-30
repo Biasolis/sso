@@ -4,7 +4,7 @@ import pool from '../database/db.js';
 import { authenticateLDAP } from '../services/ldapService.js';
 import crypto from 'crypto';
 import { sendPasswordResetEmail, sendVerificationEmail } from '../services/mailService.js';
-import logger from '../config/logger.js'; // Importar o logger
+import logger from '../config/logger.js';
 
 // Função para registar um novo utilizador
 export const signup = async (req, res) => {
@@ -58,6 +58,18 @@ export const login = async (req, res) => {
     const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     let user = result.rows[0];
 
+    const processLogin = (loggedInUser) => {
+        const token = jwt.sign({ id: loggedInUser.id, email: loggedInUser.email }, process.env.JWT_SECRET, { expiresIn: '8h' });
+        // Inclui o status de superadmin na resposta
+        const userPayload = {
+            id: loggedInUser.id,
+            email: loggedInUser.email,
+            name: loggedInUser.name,
+            is_superadmin: loggedInUser.is_superadmin 
+        };
+        return res.status(200).json({ user: userPayload, token });
+    };
+
     if (user) {
         if (!user.is_verified) {
             logger.warn(`Tentativa de login falhada para e-mail não verificado: ${email}`);
@@ -65,9 +77,8 @@ export const login = async (req, res) => {
         }
         const isPasswordCorrect = await bcrypt.compare(password, user.password_hash);
         if (isPasswordCorrect) {
-            const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '8h' });
             logger.info(`Login bem-sucedido (local) para: ${email}`);
-            return res.status(200).json({ user: { id: user.id, email: user.email, name: user.name }, token });
+            return processLogin(user);
         }
     }
 
@@ -87,9 +98,8 @@ export const login = async (req, res) => {
                 logger.info(`Utilizador LDAP provisionado localmente: ${ldapUser.email}`);
             }
             
-            const token = jwt.sign({ id: localUser.id, email: localUser.email }, process.env.JWT_SECRET, { expiresIn: '8h' });
             logger.info(`Login bem-sucedido (LDAP) para: ${email}`);
-            return res.status(200).json({ user: { id: localUser.id, email: localUser.email, name: localUser.name }, token });
+            return processLogin(localUser);
         }
     }
     
