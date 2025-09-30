@@ -47,7 +47,7 @@ export const getDashboardMetrics = async (req, res) => {
 // Users
 export const getUsers = async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT id, email, name, is_superadmin, created_at, updated_at FROM users');
+    const { rows } = await pool.query('SELECT id, email, name, is_superadmin, is_verified, created_at, updated_at FROM users');
     res.status(200).json(rows);
   } catch (error) {
     logger.error('Erro ao buscar utilizadores:', error);
@@ -149,7 +149,7 @@ export const promoteUser = async (req, res) => {
     const { id } = req.params;
     try {
         const { rows } = await pool.query(
-            'UPDATE users SET is_superadmin = TRUE, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING id, name, email, is_superadmin',
+            'UPDATE users SET is_superadmin = TRUE, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *',
             [id]
         );
         if (rows.length === 0) {
@@ -162,6 +162,23 @@ export const promoteUser = async (req, res) => {
     }
 };
 
+// NOVA FUNÇÃO
+export const verifyUser = async (req, res) => {
+    const { id } = req.params;
+    try {
+        const { rows } = await pool.query(
+            'UPDATE users SET is_verified = TRUE, updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING *',
+            [id]
+        );
+        if (rows.length === 0) {
+            return res.status(404).json({ message: 'Utilizador não encontrado.' });
+        }
+        res.status(200).json(rows[0]);
+    } catch (error) {
+        logger.error(`Erro ao verificar o utilizador ${id}:`, error);
+        res.status(500).json({ message: 'Erro interno do servidor.' });
+    }
+};
 
 // Groups
 export const getGroups = async (req, res) => {
@@ -322,7 +339,6 @@ export const getUsersNotInGroup = async (req, res) => {
 // OAuth Clients
 export const getClients = async (req, res) => {
     try {
-        // CORRIGIDO: Adicionada a coluna 'allowed_scopes' à consulta
         const { rows } = await pool.query('SELECT id, client_id, client_name, redirect_uris, allowed_scopes FROM clients');
         res.status(200).json(rows);
     } catch (error) {

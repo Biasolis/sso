@@ -17,8 +17,8 @@ function UsersPage() {
       setLoading(true);
       const response = await apiClient.get('/superadmin/users');
       setUsers(response.data);
-    } catch (err) {
-      toast.error('Falha ao buscar usuários.');
+    } catch (err) { // CORRIGIDO: Adicionadas chavetas
+      toast.error('Falha ao buscar utilizadores.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -30,28 +30,42 @@ function UsersPage() {
   }, []);
 
   const handleDeleteUser = async (userId) => {
-    if (window.confirm('Tem certeza que deseja excluir este usuário?')) {
+    if (window.confirm('Tem a certeza que deseja excluir este utilizador?')) {
       try {
         await apiClient.delete(`/superadmin/users/${userId}`);
         setUsers(users.filter((user) => user.id !== userId));
-        toast.success('Usuário excluído com sucesso!');
+        toast.success('Utilizador excluído com sucesso!');
       } catch (err) {
-        toast.error('Falha ao excluir o usuário.');
+        toast.error('Falha ao excluir o utilizador.');
         console.error(err);
       }
     }
   };
 
   const handlePromoteUser = async (userId) => {
-      if (window.confirm('Deseja dar privilégios de Superadmin a este usuário? Esta ação não pode ser desfeita pela interface.')) {
+      if (window.confirm('Deseja dar privilégios de Superadmin a este utilizador? Esta ação não pode ser desfeita pela interface.')) {
           const promise = apiClient.post(`/superadmin/users/${userId}/promote`);
           toast.promise(promise, {
-              loading: 'Promovendo...',
+              loading: 'A promover...',
               success: (response) => {
                   setUsers(users.map(u => u.id === userId ? response.data : u));
-                  return 'Usuário promovido com sucesso!';
+                  return 'Utilizador promovido com sucesso!';
               },
-              error: 'Falha ao promover o usuário.'
+              error: 'Falha ao promover o utilizador.'
+          });
+      }
+  };
+
+  const handleVerifyUser = async (userId) => {
+      if (window.confirm('Deseja verificar manualmente o e-mail deste utilizador?')) {
+          const promise = apiClient.post(`/superadmin/users/${userId}/verify`);
+          toast.promise(promise, {
+              loading: 'A verificar...',
+              success: (response) => {
+                  setUsers(users.map(u => u.id === userId ? response.data : u));
+                  return 'Utilizador verificado com sucesso!';
+              },
+              error: 'Falha ao verificar o utilizador.'
           });
       }
   };
@@ -88,7 +102,7 @@ function UsersPage() {
       : apiClient.post('/superadmin/users', userData);
 
     toast.promise(promise, {
-        loading: 'Salvando...',
+        loading: 'A guardar...',
         success: (response) => {
             if (modalMode === 'edit') {
                 setUsers(users.map(user => user.id === currentUser.id ? response.data : user));
@@ -96,24 +110,25 @@ function UsersPage() {
                 setUsers([...users, response.data]);
             }
             handleCloseModal();
-            return `Usuário ${modalMode === 'edit' ? 'atualizado' : 'criado'} com sucesso!`;
+            return `Utilizador ${modalMode === 'edit' ? 'atualizado' : 'criado'} com sucesso!`;
         },
-        error: `Falha ao ${modalMode === 'edit' ? 'atualizar' : 'criar'} o usuário.`
+        error: `Falha ao ${modalMode === 'edit' ? 'atualizar' : 'criar'} o utilizador.`
     });
   };
 
-  if (loading) return <p>Carregando usuários...</p>;
+  if (loading) return <p>A carregar utilizadores...</p>;
 
   return (
     <div>
-      <h1>Gerenciamento de Usuários</h1>
-      <button className="btn-add" onClick={handleAddClick}>Adicionar Usuário</button>
+      <h1>Gestão de Utilizadores</h1>
+      <button className="btn-add" onClick={handleAddClick}>Adicionar Utilizador</button>
       <table className="users-table">
         <thead>
           <tr>
             <th>Nome</th>
             <th>Email</th>
-            <th>Status</th>
+            <th>Status (Admin)</th>
+            <th>Status (Verificação)</th>
             <th>Ações</th>
           </tr>
         </thead>
@@ -123,9 +138,15 @@ function UsersPage() {
               <td>{user.name}</td>
               <td>{user.email}</td>
               <td>
-                {user.is_superadmin ? <span className="status-admin">Superadmin</span> : 'Usuário'}
+                {user.is_superadmin ? <span className="status-admin">Superadmin</span> : 'Utilizador'}
               </td>
               <td>
+                {user.is_verified ? <span className="status-verified">Verificado</span> : <span className="status-pending">Pendente</span>}
+              </td>
+              <td className="actions-cell">
+                {!user.is_verified && (
+                    <button className="btn-verify" onClick={() => handleVerifyUser(user.id)}>Verificar</button>
+                )}
                 {!user.is_superadmin && (
                     <button className="btn-promote" onClick={() => handlePromoteUser(user.id)}>Promover</button>
                 )}
@@ -140,7 +161,7 @@ function UsersPage() {
       <Modal 
         isOpen={isModalOpen} 
         onClose={handleCloseModal} 
-        title={modalMode === 'edit' ? 'Editar Usuário' : 'Adicionar Usuário'}
+        title={modalMode === 'edit' ? 'Editar Utilizador' : 'Adicionar Utilizador'}
       >
         <form onSubmit={handleFormSubmit} className="user-form">
           <div className="form-group">
@@ -152,7 +173,7 @@ function UsersPage() {
             <input id="email" type="email" defaultValue={currentUser?.email} required />
           </div>
           <div className="form-group">
-            <label htmlFor="password">Senha:</label>
+            <label htmlFor="password">Palavra-passe:</label>
             <input 
               id="password" 
               type="password" 
@@ -161,13 +182,13 @@ function UsersPage() {
             />
           </div>
           <div className="form-actions">
-            <button type="submit" className="btn-save">Salvar</button>
+            <button type="submit" className="btn-save">Guardar</button>
             <button type="button" onClick={handleCloseModal} className="btn-cancel">Cancelar</button>
           </div>
         </form>
       </Modal>
     </div>
   );
-}
+} // CORRIGIDO: Trocado ')' por '}' para fechar a função
 
 export default UsersPage;

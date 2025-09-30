@@ -17,12 +17,9 @@
   border-bottom: 1px solid #ddd;
 }
 
-.users-table tbody tr:nth-of-type(even) {
-  background-color: #f3f3f3;
-}
-
-.users-table tbody tr:hover {
-  background-color: #e8f4f8;
+.users-table .actions-cell {
+    width: 1%;
+    white-space: nowrap;
 }
 
 .users-table button {
@@ -41,6 +38,30 @@
     border-radius: 12px;
     font-size: 12px;
     font-weight: bold;
+}
+
+.status-verified {
+    background-color: #27ae60;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.status-pending {
+    background-color: #e67e22;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.users-table tbody tr:nth-of-type(even) {
+  background-color: #f3f3f3;
+}
+
+.users-table tbody tr:hover {
+  background-color: #e8f4f8;
 }
 
 .btn-add {
@@ -80,6 +101,14 @@
 
 .btn-promote:hover {
     background-color: #8e44ad;
+}
+
+.btn-verify {
+    background-color: #1abc9c;
+}
+
+.btn-verify:hover {
+    background-color: #16a085;
 }
 
 /* Estilos para o formulário no modal */

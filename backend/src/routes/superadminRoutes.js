@@ -8,6 +8,7 @@ import {
     updateUser,
     deleteUser,
     promoteUser,
+    verifyUser, // Importar
     getGroups,
     createGroup,
     updateGroup,
@@ -38,6 +39,7 @@ router.post('/users', createUser);
 router.put('/users/:id', updateUser);
 router.delete('/users/:id', deleteUser);
 router.post('/users/:id/promote', promoteUser);
+router.post('/users/:id/verify', verifyUser); // Adicionado
 
 // Rotas de Grupos
 router.get('/groups', getGroups);
