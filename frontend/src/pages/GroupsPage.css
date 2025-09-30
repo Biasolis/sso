@@ -17,12 +17,9 @@
   border-bottom: 1px solid #ddd;
 }
 
-.groups-table tbody tr:nth-of-type(even) {
-  background-color: #f3f3f3;
-}
-
-.groups-table tbody tr:hover {
-  background-color: #e8f4f8;
+.groups-table .actions-cell {
+    width: 1%;
+    white-space: nowrap;
 }
 
 .groups-table .actions-cell button {
@@ -37,13 +34,36 @@
   color: white;
 }
 
+.groups-table code {
+    background-color: #ecf0f1;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+.groups-table .no-mapping {
+    color: #95a5a6;
+    font-style: italic;
+}
+
+.groups-table tbody tr:nth-of-type(even) {
+  background-color: #f3f3f3;
+}
+
+.groups-table tbody tr:hover {
+  background-color: #e8f4f8;
+}
+
+.btn-edit {
+  background-color: #3498db;
+}
+
+.btn-edit:hover {
+  background-color: #2980b9;
+}
+
 .btn-manage {
   background-color: #f39c12;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  color: white;
 }
 
 .btn-manage:hover {
@@ -65,6 +85,14 @@
   padding: 8px;
   border: 1px solid #ccc;
   border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.group-form small {
+  display: block;
+  margin-top: 5px;
+  color: #7f8c8d;
+  font-size: 12px;
 }
 
 .group-form .form-actions {

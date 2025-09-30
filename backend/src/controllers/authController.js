@@ -6,6 +6,33 @@ import crypto from 'crypto';
 import { sendPasswordResetEmail, sendVerificationEmail } from '../services/mailService.js';
 import logger from '../config/logger.js';
 
+// Função auxiliar para sincronizar os grupos do LDAP
+const syncLdapGroups = async (userId, ldapGroupDNs) => {
+    try {
+        // Busca todos os grupos locais que estão mapeados para os grupos do LDAP do utilizador
+        const { rows: mappedGroups } = await pool.query(
+            'SELECT id FROM groups WHERE ldap_dn = ANY($1::text[])',
+            [ldapGroupDNs]
+        );
+        const mappedGroupIds = mappedGroups.map(g => g.id);
+
+        // Apaga todas as associações de grupo existentes para este utilizador (que vieram do LDAP)
+        await pool.query(
+            `DELETE FROM user_groups WHERE user_id = $1 AND group_id IN (SELECT id FROM groups WHERE ldap_dn IS NOT NULL)`,
+            [userId]
+        );
+
+        // Insere as novas associações
+        if (mappedGroupIds.length > 0) {
+            const insertValues = mappedGroupIds.map(groupId => `('${userId}', '${groupId}')`).join(',');
+            await pool.query(`INSERT INTO user_groups (user_id, group_id) VALUES ${insertValues}`);
+        }
+        logger.info(`Grupos LDAP sincronizados para o utilizador ${userId}`);
+    } catch (error) {
+        logger.error(`Falha ao sincronizar os grupos do LDAP para o utilizador ${userId}:`, error);
+    }
+};
+
 // Função para registar um novo utilizador
 export const signup = async (req, res) => {
   const { email, password, name } = req.body;
@@ -25,7 +52,7 @@ export const signup = async (req, res) => {
     const newUser = newUserResult.rows[0];
 
     const verificationToken = crypto.randomBytes(32).toString('hex');
-    const expires_at = new Date(Date.now() + 24 * 3600000); // 24 horas de validade
+    const expires_at = new Date(Date.now() + 24 * 3600000);
 
     await pool.query(
         'INSERT INTO email_verification_tokens (token, user_id, expires_at) VALUES ($1, $2, $3)',
@@ -60,7 +87,6 @@ export const login = async (req, res) => {
 
     const processLogin = (loggedInUser) => {
         const token = jwt.sign({ id: loggedInUser.id, email: loggedInUser.email }, process.env.JWT_SECRET, { expiresIn: '8h' });
-        // Inclui o status de superadmin na resposta
         const userPayload = {
             id: loggedInUser.id,
             email: loggedInUser.email,
@@ -82,24 +108,31 @@ export const login = async (req, res) => {
         }
     }
 
-    if (process.env.LDAP_URL) {
+    if (process.env.LDAP_URL && process.env.LDAP_ACTIVATION_GROUP_DN) {
         const username = email.split('@')[0];
         const ldapUser = await authenticateLDAP(username, password);
         
         if (ldapUser) {
-            let localUser = user;
-            if (!localUser) {
+            if (!user) {
+                const activationGroup = process.env.LDAP_ACTIVATION_GROUP_DN;
+                if (!ldapUser.groups || !ldapUser.groups.includes(activationGroup)) {
+                    logger.warn(`Tentativa de login LDAP falhada para ${email}: não pertence ao grupo de ativação.`);
+                    return res.status(403).json({ message: 'Não tem permissão para aceder a este sistema.' });
+                }
+                
                 const randomPasswordHash = await bcrypt.hash(crypto.randomBytes(20).toString('hex'), 10);
                 const newUserResult = await pool.query(
                     'INSERT INTO users (email, password_hash, name, is_verified) VALUES ($1, $2, $3, TRUE) RETURNING *',
                     [ldapUser.email, randomPasswordHash, ldapUser.name]
                 );
-                localUser = newUserResult.rows[0];
+                user = newUserResult.rows[0];
                 logger.info(`Utilizador LDAP provisionado localmente: ${ldapUser.email}`);
             }
             
+            await syncLdapGroups(user.id, ldapUser.groups);
+            
             logger.info(`Login bem-sucedido (LDAP) para: ${email}`);
-            return processLogin(localUser);
+            return processLogin(user);
         }
     }
     

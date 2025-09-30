@@ -1,49 +1,41 @@
 import ldap from 'ldapjs';
+import logger from '../config/logger.js';
 
 let client;
 
-// Só cria o cliente LDAP se a URL estiver definida no .env
 if (process.env.LDAP_URL) {
     client = ldap.createClient({
         url: process.env.LDAP_URL
     });
 
     client.on('error', (err) => {
-        console.error('Erro de conexão com o cliente LDAP:', err);
+        logger.error('Erro de conexão com o cliente LDAP:', err);
     });
 }
 
-/**
- * Autentica um usuário contra o servidor LDAP/AD.
- * Retorna os dados do usuário do AD em caso de sucesso, ou null em caso de falha.
- */
 export const authenticateLDAP = (username, password) => {
-  // Se o cliente LDAP não foi inicializado, não faz nada
   if (!client) {
       return Promise.resolve(null);
   }
 
   return new Promise((resolve, reject) => {
-    // Primeiro, fazemos o "bind" com um usuário administrativo para poder pesquisar
     client.bind(process.env.LDAP_BIND_DN, process.env.LDAP_BIND_PASSWORD, (err) => {
       if (err) {
-        console.error('LDAP Bind Error (Admin):', err);
+        logger.error('LDAP Bind Error (Admin):', err);
         return reject(new Error('Não foi possível conectar ao servidor de autenticação.'));
       }
       
       const searchOptions = {
-        // sAMAccountName é o login do usuário no AD (ex: "joao.silva")
-        // userPrincipalName é o login no formato "joao.silva@dominio.com"
         filter: `(sAMAccountName=${username})`,
         scope: 'sub',
-        attributes: ['dn', 'mail', 'givenName', 'sn'] // Atributos que queremos buscar
+        // Pedimos agora o atributo 'memberOf'
+        attributes: ['dn', 'mail', 'givenName', 'sn', 'memberOf']
       };
 
-      // Procura pelo usuário no AD
       client.search(process.env.LDAP_SEARCH_BASE, searchOptions, (err, res) => {
         if (err) {
-            console.error('LDAP Search Error:', err);
-            return reject(new Error('Erro ao procurar usuário no servidor de autenticação.'));
+            logger.error('LDAP Search Error:', err);
+            return reject(new Error('Erro ao procurar utilizador no servidor de autenticação.'));
         }
         
         let userEntry = null;
@@ -54,29 +46,27 @@ export const authenticateLDAP = (username, password) => {
 
         res.on('end', (result) => {
           if (!userEntry) {
-            // Usuário não encontrado no AD
             return resolve(null);
           }
           
-          // Se o usuário foi encontrado, tentamos fazer "bind" com a senha dele
-          // para verificar se a senha está correta.
           const userClient = ldap.createClient({ url: process.env.LDAP_URL });
           userClient.bind(userEntry.dn, password, (bindErr) => {
-            userClient.unbind(); // Garante que a conexão seja fechada
+            userClient.unbind();
             if (bindErr) {
-              // Senha incorreta
               return resolve(null);
             }
-            // Sucesso!
+            
+            // Retorna os dados do utilizador, incluindo os grupos
             resolve({
                 email: userEntry.mail,
-                name: `${userEntry.givenName} ${userEntry.sn}`
+                name: `${userEntry.givenName} ${userEntry.sn}`,
+                groups: Array.isArray(userEntry.memberOf) ? userEntry.memberOf : [userEntry.memberOf]
             });
           });
         });
 
         res.on('error', (err) => {
-            console.error('LDAP Search Result Error:', err);
+            logger.error('LDAP Search Result Error:', err);
             reject(new Error('Erro durante a busca no servidor de autenticação.'));
         });
       });

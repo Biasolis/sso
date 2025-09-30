@@ -5,7 +5,6 @@ import logger from '../config/logger.js';
 
 const generateSecureString = (length = 32) => crypto.randomBytes(length).toString('hex');
 
-// NOVA FUNÇÃO
 export const getDashboardMetrics = async (req, res) => {
     try {
         const userCountQuery = pool.query('SELECT COUNT(*) FROM users');
@@ -191,6 +190,33 @@ export const createGroup = async (req, res) => {
             return res.status(409).json({ message: 'Este nome de grupo já está em uso.' });
         }
         logger.error('Erro ao criar grupo:', error);
+        res.status(500).json({ message: 'Erro interno do servidor.' });
+    }
+};
+
+export const updateGroup = async (req, res) => {
+    const { id } = req.params;
+    // Permite que o ldap_dn seja definido como null para remover o mapeamento
+    const { name, ldap_dn = null } = req.body;
+
+    if (!name) {
+        return res.status(400).json({ message: 'O nome do grupo é obrigatório.' });
+    }
+
+    try {
+        const { rows } = await pool.query(
+            'UPDATE groups SET name = $1, ldap_dn = $2 WHERE id = $3 RETURNING *',
+            [name, ldap_dn, id]
+        );
+        if (rows.length === 0) {
+            return res.status(404).json({ message: 'Grupo não encontrado.' });
+        }
+        res.status(200).json(rows[0]);
+    } catch (error) {
+        if (error.code === '23505') {
+            return res.status(409).json({ message: 'O nome do grupo ou o DN do LDAP já estão em uso.' });
+        }
+        logger.error(`Erro ao atualizar o grupo ${id}:`, error);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 };

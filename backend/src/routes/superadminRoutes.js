@@ -10,6 +10,7 @@ import {
     promoteUser,
     getGroups,
     createGroup,
+    updateGroup,
     deleteGroup,
     addUserToGroup,
     removeUserFromGroup,
@@ -25,7 +26,6 @@ import {
 
 const router = Router();
 
-// Aplica o middleware de superadmin a todas as rotas deste ficheiro
 router.use(isSuperadmin);
 
 // Rotas do Dashboard
@@ -42,6 +42,7 @@ router.post('/users/:id/promote', promoteUser);
 // Rotas de Grupos
 router.get('/groups', getGroups);
 router.post('/groups', createGroup);
+router.put('/groups/:id', updateGroup);
 router.delete('/groups/:id', deleteGroup);
 router.get('/groups/:id/members', getGroupWithMembers);
 router.get('/groups/:id/available-users', getUsersNotInGroup);

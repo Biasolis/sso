@@ -28,10 +28,11 @@ CREATE TABLE IF NOT EXISTS clients (
 CREATE TABLE IF NOT EXISTS groups (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL UNIQUE,
+    ldap_dn VARCHAR(255) UNIQUE, -- Adicionado: Distinguished Name do grupo no AD
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Tabela para associação entre utilizadores e grupos (relação muitos-para-muitos)
+-- Tabela de associação entre utilizadores e grupos (relação muitos-para-muitos)
 CREATE TABLE IF NOT EXISTS user_groups (
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     group_id UUID NOT NULL REFERENCES groups(id) ON DELETE CASCADE,
@@ -78,8 +79,7 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     client_id VARCHAR(255) NOT NULL,
     is_revoked BOOLEAN DEFAULT FALSE,
-    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    expires_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Tabela para armazenar os tokens de redefinição de palavra-passe
@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS email_verification_tokens (
     expires_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
--- Tabela para registar os acessos via SSO (NOVO)
+-- Tabela para registar os acessos via SSO
 CREATE TABLE IF NOT EXISTS sso_access_logs (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
