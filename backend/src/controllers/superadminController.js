@@ -196,7 +196,6 @@ export const createGroup = async (req, res) => {
 
 export const updateGroup = async (req, res) => {
     const { id } = req.params;
-    // Permite que o ldap_dn seja definido como null para remover o mapeamento
     const { name, ldap_dn = null } = req.body;
 
     if (!name) {
@@ -323,6 +322,7 @@ export const getUsersNotInGroup = async (req, res) => {
 // OAuth Clients
 export const getClients = async (req, res) => {
     try {
+        // CORRIGIDO: Adicionada a coluna 'allowed_scopes' à consulta
         const { rows } = await pool.query('SELECT id, client_id, client_name, redirect_uris, allowed_scopes FROM clients');
         res.status(200).json(rows);
     } catch (error) {

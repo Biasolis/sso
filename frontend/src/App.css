@@ -1,8 +1,9 @@
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+  /* max-width: 1280px; <-- REMOVIDO */
+  margin: 0; /* Alterado de '0 auto' */
+  /* padding: 2rem; <-- REMOVIDO */
+  text-align: left; /* Alterado de 'center' */
+  width: 100%; /* Adicionado */
 }
 
 .logo {

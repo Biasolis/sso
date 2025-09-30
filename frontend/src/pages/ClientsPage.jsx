@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import apiClient from '../api/axiosConfig';
 import Modal from '../components/Modal';
-import ManageClientPermissionsModal from '../components/ManageClientPermissionsModal'; // Importar
+import ManageClientPermissionsModal from '../components/ManageClientPermissionsModal';
 import { toast } from 'react-hot-toast';
 import './ClientsPage.css';
 
@@ -12,15 +12,20 @@ function ClientsPage() {
   // Estados para os modais
   const [isAddModalOpen, setAddModalOpen] = useState(false);
   const [isCredentialsModalOpen, setCredentialsModalOpen] = useState(false);
-  const [isPermissionsModalOpen, setPermissionsModalOpen] = useState(false); // Novo
+  const [isPermissionsModalOpen, setPermissionsModalOpen] = useState(false);
   
   const [newClientCredentials, setNewClientCredentials] = useState(null);
-  const [selectedClient, setSelectedClient] = useState(null); // Novo
+  const [selectedClient, setSelectedClient] = useState(null);
 
   const fetchClients = async () => {
     try {
       setLoading(true);
       const response = await apiClient.get('/superadmin/clients');
+      
+      // --- LINHA DE DEPURAÇÃO ADICIONADA ---
+      console.log('Resposta da API /superadmin/clients:', response.data);
+      // ------------------------------------
+
       setClients(response.data);
     } catch (err) {
       toast.error('Falha ao buscar clientes.');
@@ -171,7 +176,7 @@ function ClientsPage() {
         </div>
       </Modal>
 
-      {/* Modal para Gerir Permissões (NOVO) */}
+      {/* Modal para Gerir Permissões */}
       {selectedClient && (
         <ManageClientPermissionsModal
             isOpen={isPermissionsModalOpen}
